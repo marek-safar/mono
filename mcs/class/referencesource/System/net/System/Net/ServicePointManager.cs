@@ -1,3 +1,6 @@
+#if MONO
+#undef FEATURE_PAL
+#endif
 //------------------------------------------------------------------------------
 // <copyright file="ServicePointManager.cs" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -22,7 +25,7 @@ namespace System.Net {
     using Microsoft.Win32;
     
     // This turned to be a legacy type name that is simply forwarded to System.Security.Authentication.SslProtocols defined values.
-#if !FEATURE_PAL || MONO
+#if !FEATURE_PAL
     [Flags]
     public enum SecurityProtocolType
     {
@@ -32,7 +35,33 @@ namespace System.Net {
         Tls12         = System.Security.Authentication.SslProtocols.Tls12,
     }
 #endif
-#if !MONO && !FEATURE_PAL
+#if !FEATURE_PAL
+#if MONO
+    internal class CertPolicyValidationCallback
+    {
+        class DefaultCertPolicy : ICertificatePolicy {
+            public bool CheckValidationResult(ServicePoint sp, X509Certificate cert, WebRequest request, int problem) {
+                return problem == (int)CertificateProblem.OK;
+            }
+        }
+
+        readonly ICertificatePolicy  m_CertificatePolicy;
+
+        internal CertPolicyValidationCallback()
+        {
+            m_CertificatePolicy = new DefaultCertPolicy();
+        }
+
+        internal CertPolicyValidationCallback(ICertificatePolicy certificatePolicy)
+        {
+            m_CertificatePolicy = certificatePolicy;
+        }
+
+        internal ICertificatePolicy CertificatePolicy {
+            get { return m_CertificatePolicy;}
+        }        
+    }
+#else
     internal class CertPolicyValidationCallback
     {
         readonly ICertificatePolicy  m_CertificatePolicy;
@@ -122,7 +151,8 @@ namespace System.Net {
             internal bool result;
         }
     }
-#elif MONO || !FEATURE_PAL
+#endif
+
     internal class ServerCertValidationCallback
     {
         readonly RemoteCertificateValidationCallback m_ValidationCallback;
@@ -191,7 +221,6 @@ namespace System.Net {
     }
 #endif // !FEATURE_PAL
 
-#if MONO_FEATURE_WEB_STACK
     //
     // The ServicePointManager class hands out ServicePoints (may exist or be created
     // as needed) and makes sure they are garbage collected when they expire.
@@ -202,7 +231,7 @@ namespace System.Net {
     /// <para>Manages the collection of <see cref='System.Net.ServicePoint'/> instances.</para>
     /// </devdoc>
     ///
-    public class ServicePointManager {
+    public partial class ServicePointManager {
 
         /// <devdoc>
         ///    <para>
@@ -306,7 +335,7 @@ namespace System.Net {
         //
         private static int PersistentConnectionLimit {
             get {
-#if !FEATURE_PAL
+#if !FEATURE_PAL && !MONO
                 if (ComNetOS.IsAspNetServer) {
                     return DefaultAspPersistentConnectionLimit;
                 } else
@@ -363,6 +392,33 @@ namespace System.Net {
                 if (s_ConfigTable == null) {
                     lock(s_ServicePointTable) {
                         if (s_ConfigTable == null) {
+#if MONO
+
+                            ConnectionManagementData manager;
+
+#if CONFIGURATION_DEP
+                            string configKey = "system.net/connectionManagement";
+
+                            object cfg = ConfigurationManager.GetSection (configKey);
+                            ConnectionManagementSection s = cfg as ConnectionManagementSection;
+                            if (s != null) {
+                                manager = new ConnectionManagementData (null);
+                                foreach (ConnectionManagementElement e in s.ConnectionManagement)
+                                    manager.Add (e.Address, e.MaxConnection);
+
+                                s_ConnectionLimit = (int) manager.GetMaxConnections ("*");             
+                            } else
+#endif
+                            {
+                                manager = (ConnectionManagementData) ConfigurationSettings.GetConfig (configKey);
+                                if (manager != null) {
+                                    s_ConnectionLimit = (int) manager.GetMaxConnections ("*");             
+                                }
+                            }
+
+                            // TODO: populate
+                            s_ConfigTable = new Hashtable ();
+#else
                             ConnectionManagementSectionInternal configSection 
                                 = ConnectionManagementSectionInternal.GetSection();
                             Hashtable configTable = null;
@@ -384,6 +440,7 @@ namespace System.Net {
                                 s_ConnectionLimit = connectionLimit;
                             }
                             s_ConfigTable = configTable;
+#endif
                         }
                     }
                 }
@@ -464,7 +521,9 @@ namespace System.Net {
                 return s_MaxServicePoints;
             }
             set {
+#if !DISABLE_CAS_USE
                 ExceptionHelper.WebPermissionUnrestricted.Demand();
+#endif
                 if (!ValidationHelper.ValidateRange(value, 0, Int32.MaxValue)) {
                     throw new ArgumentOutOfRangeException("value");
                 }
@@ -480,7 +539,9 @@ namespace System.Net {
                 return InternalConnectionLimit;
             }
             set {
+#if !DISABLE_CAS_USE
                 ExceptionHelper.WebPermissionUnrestricted.Demand();
+#endif
                 if (value > 0) {
                     InternalConnectionLimit = value;
 
@@ -501,7 +562,9 @@ namespace System.Net {
                 return s_ServicePointIdlingQueue.Duration;
             }
             set {
+#if !DISABLE_CAS_USE
                 ExceptionHelper.WebPermissionUnrestricted.Demand();
+#endif
                 if ( !ValidationHelper.ValidateRange(value, Timeout.Infinite, Int32.MaxValue)) {
                     throw new ArgumentOutOfRangeException("value");
                 }
@@ -591,8 +654,10 @@ namespace System.Net {
                 return GetLegacyCertificatePolicy();
             }
             set {
+#if !DISABLE_CAS_USE
                 //Prevent for an applet to override default Certificate Policy
                 ExceptionHelper.UnmanagedPermission.Demand();
+#endif
                 s_CertPolicyValidationCallback = new CertPolicyValidationCallback(value);
             }
         }
@@ -619,8 +684,10 @@ namespace System.Net {
                     return s_ServerCertValidationCallback.ValidationCallback;
             }
             set {
+#if !DISABLE_CAS_USE
                 // Prevent an applet from overriding the default Certificate Policy
                 ExceptionHelper.InfrastructurePermission.Demand();
+#endif
                 if (value == null)
                 {
                     s_ServerCertValidationCallback = null;
@@ -660,6 +727,9 @@ namespace System.Net {
                     bool disableStrongCryptoInternal = false;
                     int schUseStrongCryptoKeyValue = 0;
 
+#if MONO
+                    s_SecurityProtocolType =  SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+#else
                     if (LocalAppContextSwitches.DontEnableSchUseStrongCrypto)
                     {
                         //.Net 4.5.2 and below will default to false unless the registry key is specifically set to 1.
@@ -699,7 +769,7 @@ namespace System.Net {
                         catch (NotSupportedException) { }
                         catch (OverflowException) { }
                     }
-
+#endif
                     disableStrongCrypto = disableStrongCryptoInternal;
                     disableStrongCryptoInitialized = true;
                 }
@@ -743,6 +813,7 @@ namespace System.Net {
                 }
 
                 int reusePortKeyValue = 0;
+#if !MONO
                 try {
                     reusePortKeyValue = RegistryConfiguration.GlobalConfigReadInt(reusePortValueName, 0);
                 }
@@ -751,6 +822,7 @@ namespace System.Net {
                         throw;
                     }
                 }
+#endif
 
                 bool reusePortInternal = false;
                 if (reusePortKeyValue == 1) {
@@ -771,8 +843,10 @@ namespace System.Net {
                 return SettingsSectionInternal.Section.CheckCertificateRevocationList;
             }
             set {
+#if !DISABLE_CAS_USE
                 //Prevent an applet to override default certificate checking
                 ExceptionHelper.UnmanagedPermission.Demand();
+#endif
                 SettingsSectionInternal.Section.CheckCertificateRevocationList = value;
             }
         }
@@ -984,6 +1058,9 @@ namespace System.Net {
                             userDefined = true;
                         }
                         servicePoint = new ServicePoint(address, s_ServicePointIdlingQueue, connectionLimit, tempEntry, userDefined, isProxyServicePoint);
+#if MONO
+                        servicePoint.maxIdleTime = s_ServicePointIdlingQueue.Duration;
+#endif
                         GlobalLog.Print("ServicePointManager::FindServicePointHelper() created ServicePoint#" + ValidationHelper.HashString(servicePoint));
                         servicePointReference = new WeakReference(servicePoint);
                         s_ServicePointTable[tempEntry] = servicePointReference;
@@ -1004,7 +1081,7 @@ namespace System.Net {
         //
         // FindServicePoint - Query using an Uri for a given server point
         //
-
+#if !MONO
         /// <devdoc>
         /// <para>Findes an existing <see cref='System.Net.ServicePoint'/> or creates a new <see cref='System.Net.ServicePoint'/> to manage communications to the specified <see cref='System.Uri'/>
         /// instance.</para>
@@ -1065,7 +1142,7 @@ namespace System.Net {
             GlobalLog.Leave("ServicePointManager::FindServicePoint() servicePoint#" + ValidationHelper.HashString(servicePoint));
             return servicePoint;
         }
-
+#endif
         [FriendAccessAllowed]
         internal static void CloseConnectionGroups(string connectionGroupName) {
             // This method iterates through all service points and closes connection groups with the provided name.
@@ -1135,5 +1212,4 @@ namespace System.Net {
             GlobalLog.Leave("ServicePointManager::SetTcpKeepAlive()");
         }
     }
-#endif
 }

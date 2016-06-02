@@ -44,7 +44,7 @@ namespace System.Net
 	{
 		Uri uri;
 		int connectionLimit;
-		int maxIdleTime;
+		internal int maxIdleTime;
 		int currentConnections;
 		DateTime idleSince;
 		DateTime lastDnsResolve;
@@ -61,16 +61,27 @@ namespace System.Net
 		int tcp_keepalive_time;
 		int tcp_keepalive_interval;
 		Timer idleTimer;
+		string m_LookupString;
 
 		// Constructors
 
-		internal ServicePoint (Uri uri, int connectionLimit, int maxIdleTime)
+		internal ServicePoint (Uri address, TimerThread.Queue defaultIdlingQueue, int defaultConnectionLimit, string lookupString, bool userChangedLimit, bool proxyServicePoint)
+		{
+			this.uri = address;
+			this.connectionLimit = defaultConnectionLimit;
+			this.m_LookupString = lookupString;
+
+			this.idleSince = DateTime.UtcNow;
+		}
+
+		internal ServicePoint (Uri uri, int connectionLimit, int maxIdleTime, string lookupString)
 		{
 			this.uri = uri;  
 			this.connectionLimit = connectionLimit;
 			this.maxIdleTime = maxIdleTime;	
 			this.currentConnections = 0;
 			this.idleSince = DateTime.UtcNow;
+			this.m_LookupString = lookupString;
 		}
 		
 		// Properties
@@ -403,6 +414,10 @@ namespace System.Net
 			return false;
 		}
 
+		internal void CloseConnectionGroupInternal(string connectionGroupName) {
+			throw new NotImplementedException ();
+		}
+
 		//
 		// Copied from the referencesource
 		//
@@ -491,6 +506,22 @@ namespace System.Net
 		}
 
 		internal Socket GetConnection(PooledStream PooledStream, object owner, bool async, out IPAddress address, ref Socket abortSocket, ref Socket abortSocket6)
+		{
+			throw new NotImplementedException ();
+		}
+
+		internal string LookupString {
+            get {
+                return m_LookupString;
+            }
+        }
+
+		[System.Diagnostics.Conditional("DEBUG")]
+		internal void DebugMembers(int requestHash) 
+		{
+		}
+
+		internal void ReleaseAllConnectionGroups ()
 		{
 			throw new NotImplementedException ();
 		}
