@@ -223,7 +223,7 @@ namespace System.Net.Http
 		{
 			if (disposing && !disposed) {
 				Volatile.Write (ref disposed, true);
-				ServicePointManager.CloseConnectionGroup (connectionGroupName);
+				ServicePointManager.CloseConnectionGroups (connectionGroupName);
 			}
 
 			base.Dispose (disposing);

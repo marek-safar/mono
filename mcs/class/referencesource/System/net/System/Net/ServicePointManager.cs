@@ -244,7 +244,11 @@ namespace System.Net {
         ///       The default number of persistent connections allowed on a <see cref='System.Net.ServicePoint'/>.
         ///    </para>
         /// </devdoc>
+#if MONOTOUCH
+        public const int DefaultPersistentConnectionLimit = 10;
+#else
         public const int DefaultPersistentConnectionLimit = 2;
+#endif
 
         /// <devdoc>
         ///    <para>
@@ -407,17 +411,16 @@ namespace System.Net {
                                     manager.Add (e.Address, e.MaxConnection);
 
                                 s_ConnectionLimit = (int) manager.GetMaxConnections ("*");             
-                            } else
-#endif
-                            {
+                            }
+                            else {
                                 manager = (ConnectionManagementData) ConfigurationSettings.GetConfig (configKey);
                                 if (manager != null) {
                                     s_ConnectionLimit = (int) manager.GetMaxConnections ("*");             
                                 }
                             }
-
-                            // TODO: populate
-                            s_ConfigTable = new Hashtable ();
+#endif
+                            // TODO: populate from ConnectionManagementSection
+                            s_ConfigTable = new Hashtable (0);
 #else
                             ConnectionManagementSectionInternal configSection 
                                 = ConnectionManagementSectionInternal.GetSection();

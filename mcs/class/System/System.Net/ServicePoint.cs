@@ -70,20 +70,20 @@ namespace System.Net
 			this.uri = address;
 			this.connectionLimit = defaultConnectionLimit;
 			this.m_LookupString = lookupString;
+			this.usesProxy = proxyServicePoint;
 
 			this.idleSince = DateTime.UtcNow;
+
+			useNagle = ServicePointManager.UseNagleAlgorithm;
+			sendContinue = ServicePointManager.Expect100Continue;
+			// TODO:
+			// useConnect =
+
+			tcp_keepalive = ServicePointManager.s_UseTcpKeepAlive;
+			tcp_keepalive_time = ServicePointManager.s_TcpKeepAliveTime;
+			tcp_keepalive_interval = ServicePointManager.s_TcpKeepAliveInterval;
 		}
 
-		internal ServicePoint (Uri uri, int connectionLimit, int maxIdleTime, string lookupString)
-		{
-			this.uri = uri;  
-			this.connectionLimit = connectionLimit;
-			this.maxIdleTime = maxIdleTime;	
-			this.currentConnections = 0;
-			this.idleSince = DateTime.UtcNow;
-			this.m_LookupString = lookupString;
-		}
-		
 		// Properties
 		
 		public Uri Address {
