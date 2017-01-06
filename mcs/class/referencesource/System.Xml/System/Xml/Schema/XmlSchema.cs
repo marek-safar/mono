@@ -189,8 +189,12 @@ namespace System.Xml.Schema {
                 }
 
             } else if (this.Namespaces != null && this.Namespaces.Count > 0) {
-                Hashtable serializerNS = this.Namespaces.Namespaces;
+                var serializerNS = this.Namespaces.Namespaces;
+#if MONO_NET_NATIVE
+                if (!serializerNS.ContainsKey("xs") && !serializerNS.ContainsValue(XmlReservedNs.NsXs)) {
+#else
                 if (serializerNS["xs"] == null && !serializerNS.ContainsValue(XmlReservedNs.NsXs)) { //Prefix xs not defined AND schema namespace not already mapped to a prefix
+#endif
                     serializerNS.Add("xs", XmlReservedNs.NsXs);
                 }
                 ns = this.Namespaces;

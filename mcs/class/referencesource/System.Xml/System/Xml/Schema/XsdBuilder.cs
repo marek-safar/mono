@@ -11,6 +11,7 @@ namespace System.Xml.Schema {
     using System.Collections;
     using System.Diagnostics;
     using System.Xml.Serialization;
+    using System.Collections.Generic;
 
 
     internal sealed class XsdBuilder : SchemaBuilder {
@@ -670,7 +671,11 @@ namespace System.Xml.Schema {
 
         private ValidationEventHandler validationEventHandler;
         private ArrayList unhandledAttributes = new ArrayList();
+#if MONO_NET_NATIVE
+        private Dictionary<string, string> namespaces;
+#else
         private Hashtable namespaces;
+#endif
 
         internal XsdBuilder( 
                            XmlReader reader,
@@ -732,7 +737,11 @@ namespace System.Xml.Schema {
             if ((ns != this.schemaNames.NsXs) && (ns.Length != 0)) {
                 if (ns == this.schemaNames.NsXmlNs) {
                     if (this.namespaces == null) {
+#if MONO_NET_NATIVE
+                        this.namespaces = new Dictionary<string, string>();
+#else
                         this.namespaces = new Hashtable();
+#endif
                     }
                     this.namespaces.Add((name == this.schemaNames.QnXmlNs.Name) ? string.Empty : name, value);
                 }

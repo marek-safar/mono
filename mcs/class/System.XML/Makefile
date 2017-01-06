@@ -17,12 +17,16 @@ TXT_RESOURCE_STRINGS = \
 	../referencesource/System.Xml/System.Xml.txt \
 	../referencesource/System.Data.SqlXml/System.Xml.Utils.txt
 
+RESX_RESOURCE_STRING = \
+	../../../external/corefx/src/System.Private.Xml/src/Resources/Strings.resx
+
 LIB_MCS_FLAGS = -nowarn:219,414,649,1717 -unsafe -d:ASYNC
 
 ifeq (2.1, $(FRAMEWORK_VERSION))
-LIB_MCS_FLAGS += -d:AGCLR -d:DISABLE_XSLT_COMPILER -d:DISABLE_XSLT_SCRIPT,MONO_HYBRID_SYSTEM_XML -d:DISABLE_CAS_USE
+LIB_MCS_FLAGS += -d:AGCLR -d:DISABLE_XSLT_COMPILER -d:DISABLE_XSLT_SCRIPT -d:DISABLE_CAS_USE -d:NET_NATIVE,MONO_NET_NATIVE
 endif
 
+LIB_REFS = System.Core
 TEST_LIB_REFS = System.Data System.Core
 TEST_MCS_FLAGS = $(LIB_MCS_FLAGS) -nowarn:0618 -nowarn:219 -nowarn:169
 
