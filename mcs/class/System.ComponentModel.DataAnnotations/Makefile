@@ -3,11 +3,11 @@ SUBDIRS =
 include ../../build/rules.make
 
 LIBRARY = System.ComponentModel.DataAnnotations.dll
-LIB_REFS = System System.Core System.Data System.Xml
-LIB_MCS_FLAGS = -nowarn:414
+LIB_REFS = System.Core System
+LIB_MCS_FLAGS =
 
 TEST_MCS_FLAGS = $(LIB_MCS_FLAGS)
 
-TXT_RESOURCE_STRINGS = ../referencesource/System.ComponentModel.DataAnnotations/System.ComponentModel.DataAnnotations.txt
+RESX_RESOURCE_STRING = ../../../external/corefx/src/System.ComponentModel.Annotations/src/Resources/Strings.resx
 
 include ../../build/library.make
