@@ -390,7 +390,7 @@ namespace System.Net
 			return sp;
 		}
 
-		internal static void CloseConnectionGroup (string connectionGroupName)
+		internal static void CloseConnectionGroups (string connectionGroupName)
 		{
 			lock (servicePoints) {
 				foreach (ServicePoint sp in servicePoints.Values) {

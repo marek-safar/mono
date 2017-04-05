@@ -139,8 +139,7 @@ namespace MonoTests.System.Net.Http
 			try {
 				c.GetAsync ("http://google.com").Wait ();
 				Assert.Fail ("#1");
-			} catch (AggregateException e) {
-				Assert.IsTrue (e.InnerException is ObjectDisposedException, "#2");
+			} catch (ObjectDisposedException e) {
 			}
 		}
 	}

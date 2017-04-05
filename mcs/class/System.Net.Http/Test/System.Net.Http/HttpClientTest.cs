@@ -626,7 +626,7 @@ namespace MonoTests.System.Net.Http
 				Assert.AreEqual ("w3.org", response.Headers.Location.OriginalString, "#107");
 
 				Assert.AreEqual ("test description", response.ReasonPhrase, "#110");
-				Assert.AreEqual (HttpVersion.Version11, response.Version, "#111");
+				Assert.AreEqual (HttpVersion.Version10, response.Version, "#111");
 				
 				Assert.AreEqual (false, failed, "#112");
 			} finally {

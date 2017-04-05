@@ -197,6 +197,16 @@ namespace System.Net
 			ResetAuthorization ();
 		}
 
+		internal HttpWebRequest (Uri uri, bool returnResponseOnFailureStatusCode, string connectionGroupName, Action<Stream> resendRequestContent)
+			: this (uri)
+		{
+			ThrowOnError = false;
+
+			AllowWriteStreamBuffering = false;
+			connectionGroup = connectionGroupName;
+			ResendContentFactory = resendRequestContent;
+		}
+
 		void ResetAuthorization ()
 		{
 			auth_state = new AuthorizationState (this, false);

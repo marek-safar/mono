@@ -67,6 +67,15 @@ namespace System.Net.Mail {
 			ParseAddress (address);
 		}
 
+		// The components were already validated before this is called.
+		internal MailAddress (string displayName, string userName, string domain)
+		{
+			host = domain;
+			user = userName;
+			this.displayName = displayName;
+			//displayNameEncoding = Encoding.GetEncoding(MimeBasePart.DefaultCharSet);
+		}
+
 		void ParseAddress (string address)
 		{
 			// 1. Quotes for display name
