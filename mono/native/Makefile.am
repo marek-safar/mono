@@ -34,7 +34,9 @@ common_sources = \
 	../../external/corefx/src/Native/Unix/System.Native/pal_uid.c \
 	../../external/corefx/src/Native/Unix/System.Native/pal_uid.h \
 	../../external/corefx/src/Native/Unix/System.Native/pal_time.c \
-	../../external/corefx/src/Native/Unix/System.Native/pal_time.h
+	../../external/corefx/src/Native/Unix/System.Native/pal_time.h \
+	../../external/corefx/src/Native/Unix/System.Native/pal_runtimeinformation.c \
+	../../external/corefx/src/Native/Unix/System.Native/pal_runtimeinformation.h
 
 macos_sources = $(unix_sources)
 
