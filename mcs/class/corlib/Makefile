@@ -89,7 +89,6 @@ MANAGED_COLLATOR_RESOURCES_FILES = \
 endif
 
 RESOURCE_FILES = \
-	resources/charinfo.nlp \
 	$(MANAGED_COLLATOR_RESOURCES_FILES) \
 	LinkerDescriptor/mscorlib.xml
 
